@@ -1,28 +1,28 @@
-# Usa imagem com Java 17 (ajuste conforme necessário)
-FROM eclipse-temurin:17-jdk AS build
+# Etapa de build
+FROM maven:3.9.6-eclipse-temurin-17 AS build
 
 WORKDIR /app
 
-# Copia os arquivos do projeto
-COPY . .
+# Copia apenas os arquivos de configuração para aproveitar cache
+COPY pom.xml .
+RUN mvn dependency:go-offline
 
-# Garante que o Maven Wrapper tem permissão de execução
-RUN chmod +x ./mvnw
+# Copia o restante do código
+COPY src ./src
 
-# Define JAVA_HOME explicitamente (normalmente já está setado, mas garantimos)
-ENV JAVA_HOME=/opt/java/openjdk
-ENV PATH="$JAVA_HOME/bin:$PATH"
+# Compila o projeto
+RUN mvn clean package -DskipTests
 
-# Executa o build
-RUN ./mvnw -X clean package
-
-# Cria uma imagem final mais leve
+# Etapa de runtime
 FROM eclipse-temurin:17-jdk
 
 WORKDIR /app
 
-COPY --from=build /app/target/*-runner.jar app.jar
+# Copia o jar gerado do estágio anterior
+COPY --from=build /app/target/*.jar app.jar
 
+# Expõe a porta usada pela aplicação (ajuste se necessário)
 EXPOSE 8080
 
-CMD ["java", "-jar", "app.jar"]
+# Comando para iniciar a aplicação
+ENTRYPOINT ["java", "-jar", "app.jar"]
