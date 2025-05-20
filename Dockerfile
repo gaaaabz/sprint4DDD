@@ -14,7 +14,7 @@ ENV JAVA_HOME=/opt/java/openjdk
 ENV PATH="$JAVA_HOME/bin:$PATH"
 
 # Executa o build
-RUN ./mvnw -B -DskipTests clean package
+RUN ./mvnw -X clean package
 
 # Cria uma imagem final mais leve
 FROM eclipse-temurin:17-jdk
