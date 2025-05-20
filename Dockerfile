@@ -1,10 +1,10 @@
-FROM maven:3.8.7-openjdk-17 AS build
+FROM eclipse-temurin:17-jre
 WORKDIR /app
 COPY pom.xml .
 COPY src ./src
 RUN mvn clean package -DskipTests
 
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:17-jre
 WORKDIR /app
 COPY --from=build /app/target/*-runner.jar app.jar
 EXPOSE 8080
