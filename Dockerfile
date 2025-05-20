@@ -4,6 +4,7 @@ WORKDIR /app
 
 # Copia todo o conteúdo do projeto
 COPY . .
+COPY mvnw .
 
 # Garante permissão de execução
 RUN chmod +x mvnw
