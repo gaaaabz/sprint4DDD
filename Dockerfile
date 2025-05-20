@@ -1,16 +1,22 @@
-FROM eclipse-temurin:17-jdk
+# Build stage
+FROM eclipse-temurin:17-jdk as build
 
 WORKDIR /app
 
-# Copia todo o conteúdo do projeto
-COPY . .
 COPY mvnw .
-
-# Garante permissão de execução
+COPY .mvn .mvn
+COPY pom.xml .
 RUN chmod +x mvnw
 
-# Roda o Maven Wrapper com os comandos necessários
-RUN ./mvnw -DoutputFile=target/mvn-dependency-list.log -B -DskipTests clean dependency:list install
+COPY src ./src
 
-# Define o comando para executar a aplicação
+RUN ./mvnw clean package -DskipTests -B
+
+# Runtime stage
+FROM eclipse-temurin:17-jre
+
+WORKDIR /app
+
+COPY --from=build /app/target/quarkus-app /app/target/quarkus-app
+
 CMD ["java", "-jar", "target/quarkus-app/quarkus-run.jar"]
