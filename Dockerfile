@@ -1,11 +1,25 @@
-FROM eclipse-temurin:17-jre
-WORKDIR /app
+# Etapa 1: build da aplicação
+FROM maven:3.9.6-eclipse-temurin-17 AS build
+WORKDIR /build
+
+# Copia o código e o pom.xml
 COPY pom.xml .
 COPY src ./src
+
+# Faz o download das dependências e compila a aplicação
 RUN mvn clean package -DskipTests
 
-FROM eclipse-temurin:17-jre
+# Etapa 2: imagem final para rodar no Railway
+FROM eclipse-temurin:17
+
+# Define o diretório de trabalho na imagem final
 WORKDIR /app
-COPY --from=build /app/target/*-runner.jar app.jar
+
+# Copia o JAR gerado da etapa de build
+COPY --from=build /build/target/*-runner.jar app.jar
+
+# Expõe a porta padrão usada pelo Quarkus
 EXPOSE 8080
-ENTRYPOINT ["java","-jar","app.jar"]
+
+# Comando para rodar a aplicação
+CMD ["java", "-jar", "app.jar"]
