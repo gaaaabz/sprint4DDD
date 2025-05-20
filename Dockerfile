@@ -1,28 +1,20 @@
-# Etapa de build
-FROM maven:3.9.6-eclipse-temurin-17 AS build
+FROM eclipse-temurin:21 AS build
 
 WORKDIR /app
 
-# Copia apenas os arquivos de configuração para aproveitar cache
-COPY pom.xml .
-RUN mvn dependency:go-offline
 
-# Copia o restante do código
+COPY pom.xml .
 COPY src ./src
 
-# Compila o projeto
-RUN mvn clean package -DskipTests
+RUN ./mvnw clean package -DskipTests
 
-# Etapa de runtime
-FROM eclipse-temurin:17-jdk
+FROM eclipse-temurin:21-jre
 
 WORKDIR /app
 
-# Copia o jar gerado do estágio anterior
-COPY --from=build /app/target/*.jar app.jar
+COPY --from=build /app/target/quarkus-app/lib/ /app/lib/
+COPY --from=build /app/target/quarkus-app/*.jar /app/
+COPY --from=build /app/target/quarkus-app/app/ /app/app/
+COPY --from=build /app/target/quarkus-app/quarkus/ /app/quarkus/
 
-# Expõe a porta usada pela aplicação (ajuste se necessário)
-EXPOSE 8080
-
-# Comando para iniciar a aplicação
-ENTRYPOINT ["java", "-jar", "app.jar"]
+CMD ["java", "-jar", "-Dquarkus.http.host=0.0.0.0", "quarkus-run.jar"]
