@@ -1,28 +1,11 @@
-# Etapa de build
-FROM maven:3.9.6-eclipse-temurin-17 AS build
-
+FROM maven:3.8.7-openjdk-17 AS build
 WORKDIR /app
-
-# Copia apenas os arquivos de configuração para aproveitar cache
 COPY pom.xml .
-RUN mvn dependency:go-offline
-
-# Copia o restante do código
 COPY src ./src
-
-# Compila o projeto
 RUN mvn clean package -DskipTests
 
-# Etapa de runtime
-FROM eclipse-temurin:17-jdk
-
+FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
-
-# Copia o jar gerado do estágio anterior
-COPY --from=build /app/target/*.jar app.jar
-
-# Expõe a porta usada pela aplicação (ajuste se necessário)
+COPY --from=build /app/target/*-runner.jar app.jar
 EXPOSE 8080
-
-# Comando para iniciar a aplicação
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java","-jar","app.jar"]
